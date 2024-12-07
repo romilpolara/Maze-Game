@@ -42,6 +42,8 @@ class MazeGame:
         self.goal_color = "#FFC107"
         self.text_color = "#FFDF00"
         self.level_color = "#FFFFFF"
+        self.score = 0
+        self.high_score = 0
 
         self.canvas = tk.Canvas(self.master, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE + 100, bg=self.bg_color)
         self.canvas.pack()
