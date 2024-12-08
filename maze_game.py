@@ -5,8 +5,8 @@ from PIL import Image, ImageTk
 from tkinter import font as tkFont
 
 # Maze settings
-ROWS, COLS = 23, 35
-CELL_SIZE = 28
+ROWS, COLS = 20, 35
+CELL_SIZE = 30
 LEVEL_TIME = 60
 
 def load_custom_font():
@@ -44,8 +44,10 @@ class MazeGame:
         self.level_color = "#FFFFFF"
         self.score = 0
         self.high_score = 0
-
-        self.canvas = tk.Canvas(self.master, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE + 100, bg=self.bg_color)
+        self.state= "playing"
+        self.bg_image = Image.open("assets/images/background.png")
+        self.bg_image_tk = ImageTk.PhotoImage(self.bg_image)
+        self.canvas = tk.Canvas(self.master, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE + 120, bg="black")
         self.canvas.pack()
 
         self.state = "start"
@@ -122,44 +124,57 @@ class MazeGame:
     def draw_level_select_screen(self):
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor="nw", image=self.bg_image_tk)
-        self.level_select_image = Image.open("MazeGame_levelscrenn/assets/images/level_select_title.png").resized_image = self.level_select_image.resize((450, 100), Image.Resampling.LANCZOS) 
+        self.level_select_image = Image.open("assets/images/level_select_title.png")
+        resized_image = self.level_select_image.resize((450, 100), Image.Resampling.LANCZOS) 
         self.level_select_image_tk = ImageTk.PhotoImage(resized_image)
 
-        left_x = COLS * CELL_SIZE / 4
-        right_x = 3 * COLS * CELL_SIZE / 4
-        margin_top = 50
-        starting_y = ROWS * CELL_SIZE / 3 + margin_top
+        center_x = COLS * CELL_SIZE / 2
+        center_y = ROWS * CELL_SIZE / 8 
+        self.canvas.create_image(center_x, center_y, image=self.level_select_image_tk)
+        # Draw the line in the center
+        self.canvas.create_line(COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 5.5 + 50,
+                                COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 5.5 + 450,
+                                fill="white", width=2)
+        padding_x = 5
+        padding_y = 5
+        positions = [
+            (COLS * CELL_SIZE / 4 - 100, (ROWS * CELL_SIZE / 3.5) + (i * 80) + padding_y) for i in range(5)
+        ] + [
+            (3 * COLS * CELL_SIZE / 4 - 100, (ROWS * CELL_SIZE / 3.5) + (i * 80) + padding_y) for i in range(5)
+        ]
+        # Create 10 level buttons with rounded rectangles
+            # Load and place images for all levels using a loop
+        self.level_images_tk = []  # Store default images
+        self.level_hover_images_tk = []  # Store hover images
+        self.level_selected_images_tk = []  # Store selected images
+        for i in range(10):
+            # Load default and hover images for each level
+            default_image = Image.open(f"assets/images/level_{i + 1}.png")
+            resized_default_image = default_image.resize((200, 75), Image.Resampling.LANCZOS)
+            default_image_tk = ImageTk.PhotoImage(resized_default_image)
+            self.level_images_tk.append(default_image_tk)
+            hover_image = Image.open(f"assets/images/level_hor_{i + 1}.png")
+            resized_hover_image = hover_image.resize((200, 75), Image.Resampling.LANCZOS)
+            hover_image_tk = ImageTk.PhotoImage(resized_hover_image)
+            self.level_hover_images_tk.append(hover_image_tk)
+            selected_image = Image.open(f"assets/images/level_clk_{i + 1}.png")  # Image when level is selected
+            resized_selected_image = selected_image.resize((200, 75), Image.Resampling.LANCZOS)
+            selected_image_tk = ImageTk.PhotoImage(resized_selected_image)
+            self.level_selected_images_tk.append(selected_image_tk)
+        # Create the image on canvas and bind events
+            image_id = self.canvas.create_image(positions[i][0] + 100, positions[i][1] + 25, image=default_image_tk)
+            self.canvas.tag_bind(image_id, "<Button-1>", lambda event, level=i, img=image_id: self.select_level(level, img))
+            self.canvas.tag_bind(image_id, "<Enter>", lambda event, tag=image_id, level=i: self.on_hover(event, tag, level))
+            self.canvas.tag_bind(image_id, "<Leave>", lambda event, tag=image_id, level=i: self.off_hover(event, tag, level))
+    
+    def on_hover(self, event, tag, level):
+    # Change image to hover image when hovered
+        self.canvas.itemconfig(tag, image=self.level_hover_images_tk[level])
 
-        for i in range(5):
-            self.canvas.create_text(
-                left_x, starting_y + i * 55,
-                text=f"Level {i + 1}", fill=self.text_color, font=("Arial", 24),
-                tags=f"level_{i + 1}"
-            )
+    def off_hover(self, event, tag, level):
+    # Change back to default image when not hovered
+        self.canvas.itemconfig(tag, image=self.level_images_tk[level])
 
-        for i in range(5, 10):
-            self.canvas.create_text(
-                right_x, starting_y + (i - 5) * 55,
-                text=f"Level {i + 1}", fill=self.text_color, font=("Arial", 24),
-                tags=f"level_{i + 1}"
-            )
-
-        self.canvas.create_line(
-            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 3 - 10,
-            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE, fill="white", width=4
-        )
-        self.canvas.bind("<Button-1>", self.on_level_select)
-
-    def draw_game_over_screen(self):
-        self.canvas.delete("all")
-        self.canvas.create_text(
-            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 3,
-            text="Game Over", fill="red", font=("Arial", 36, "bold")
-        )
-        self.canvas.create_text(
-            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 2,
-            text="Press R to Restart", fill=self.Heading_color, font=("Arial", 24)
-        )
 
     def draw_level_screen(self):
         self.canvas.delete("all")
@@ -184,7 +199,7 @@ class MazeGame:
         maze = mazes[self.level]
         self.wall_image_horizontal = ImageTk.PhotoImage(Image.open("image/block_01.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
         self.wall_image_vertical = ImageTk.PhotoImage(Image.open("image/block_05.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
-            
+
         for y in range(ROWS):
             for x in range(COLS):
                 if maze[y][x] == 1:
