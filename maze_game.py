@@ -121,10 +121,10 @@ class MazeGame:
 
     def draw_level_select_screen(self):
         self.canvas.delete("all")
-        self.canvas.create_text(
-            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 4,
-            text="Select Level", fill=self.Heading_color, font=("Arial", 36)
-        )
+        self.canvas.create_image(0, 0, anchor="nw", image=self.bg_image_tk)
+        self.level_select_image = Image.open("MazeGame_levelscrenn/assets/images/level_select_title.png").resized_image = self.level_select_image.resize((450, 100), Image.Resampling.LANCZOS) 
+        self.level_select_image_tk = ImageTk.PhotoImage(resized_image)
+
         left_x = COLS * CELL_SIZE / 4
         right_x = 3 * COLS * CELL_SIZE / 4
         margin_top = 50
@@ -184,21 +184,7 @@ class MazeGame:
         maze = mazes[self.level]
         self.wall_image_horizontal = ImageTk.PhotoImage(Image.open("image/block_01.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
         self.wall_image_vertical = ImageTk.PhotoImage(Image.open("image/block_05.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
-
-        # for y in range(ROWS):
-        #     for x in range(COLS):
-        #         if maze[y][x] == 1:
-        #             if x > 0 and maze[y][x - 1] == 1 or x < COLS - 1 and maze[y][x + 1] == 1:
-        #                 self.canvas.create_image(
-        #                     x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2,
-        #                     image=self.wall_image_horizontal
-        #                 )
-        #             elif y > 0 and maze[y - 1][x] == 1 or y < ROWS - 1 and maze[y + 1][x] == 1:
-        #                 self.canvas.create_image(
-        #                     x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2,
-        #                     image=self.wall_image_vertical
-        #                 )
-        
+            
         for y in range(ROWS):
             for x in range(COLS):
                 if maze[y][x] == 1:
