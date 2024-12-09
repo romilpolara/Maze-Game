@@ -211,31 +211,34 @@ class MazeGame:
     def draw_maze(self):
         self.canvas.delete("all")
         maze = mazes[self.level]
+
+        # Load the images for the walls
         self.wall_image_horizontal = ImageTk.PhotoImage(Image.open("image/block_01.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
         self.wall_image_vertical = ImageTk.PhotoImage(Image.open("image/block_05.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
 
         for y in range(ROWS):
             for x in range(COLS):
                 if maze[y][x] == 1:
-                    # Check for horizontal walls
-                    if (x > 0 and maze[y][x - 1] == 1) or (x < COLS - 1 and maze[y][x + 1] == 1):
+                    # Determine if the wall is horizontal or vertical
+                    if x > 0 and maze[y][x - 1] == 1 or x < COLS - 1 and maze[y][x + 1] == 1:
+                        # Horizontal wall: Check left and right neighbors
                         self.canvas.create_image(
                             x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2,
                             image=self.wall_image_horizontal
                         )
-                    # Check for vertical walls
-                    if (y > 0 and maze[y - 1][x] == 1) or (y < ROWS - 1 and maze[y + 1][x] == 1):
+                    elif y > 0 and maze[y - 1][x] == 1 or y < ROWS - 1 and maze[y + 1][x] == 1:
+                        # Vertical wall: Check top and bottom neighbors
                         self.canvas.create_image(
                             x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2,
                             image=self.wall_image_vertical
                         )
-                    # Check for bottom wall
-                    if y < ROWS - 1 and maze[y + 1][x] == 1:
-                        self.canvas.create_image(
-                            x * CELL_SIZE + CELL_SIZE // 2, (y + 1) * CELL_SIZE - CELL_SIZE // 2,
-                            image=self.wall_image_horizontal
-                        )
 
+        # Draw the bottom boundary of the maze (if needed)
+        for x in range(COLS):
+            self.canvas.create_image(
+                x * CELL_SIZE + CELL_SIZE // 2, ROWS * CELL_SIZE + CELL_SIZE // 2,
+                image=self.wall_image_horizontal
+            )
 
     def draw_player(self):
         self.canvas.delete("player")
@@ -262,7 +265,7 @@ class MazeGame:
         self.time_left = LEVEL_TIME - (time.time() - self.start_time)
         self.canvas.delete("timer")
         self.canvas.create_text(
-            COLS * CELL_SIZE // 2, ROWS * CELL_SIZE + 50,
+            COLS * CELL_SIZE // 2, ROWS * CELL_SIZE + 65,
             text=f"Time Left: {int(self.time_left)}", fill=self.text_color, font=("Arial", 20), tags="timer"
         )
         if self.time_left <= 0:
