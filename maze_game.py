@@ -240,6 +240,15 @@ class MazeGame:
                 image=self.wall_image_horizontal
             )
 
+        self.timer_text = self.canvas.create_text(
+            100, ROWS * CELL_SIZE + 70,
+            text=f"Time left: {self.time_left}", fill=self.text_color, font=("Arial", 20)
+        )
+        self.score_text = self.canvas.create_text(
+            COLS * CELL_SIZE - 100, ROWS * CELL_SIZE + 70,
+            text=f"Score: {self.score}", fill=self.text_color, font=("Arial", 20)
+        )
+
     def draw_player(self):
         self.canvas.delete("player")
         self.canvas.create_image(
@@ -255,24 +264,72 @@ class MazeGame:
 
 
     def draw_goal(self):
-        goal_image = ImageTk.PhotoImage(Image.open("image/crate_31.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
+        x, y = COLS - 2, ROWS - 1 
+        self.goal_image = ImageTk.PhotoImage(Image.open("image/crate_31.png").resize((CELL_SIZE, CELL_SIZE), Image.Resampling.LANCZOS))
         self.canvas.create_image(
-            (COLS - 2) * CELL_SIZE + CELL_SIZE // 2, (ROWS - 2) * CELL_SIZE + CELL_SIZE // 2,
-            image=goal_image, tags="goal"
+            (x + 0.5) * CELL_SIZE, (y + 0.5) * CELL_SIZE,  # Center the image
+            image=self.goal_image
         )
+    
+    
+    def draw_mode_screen(self):
+        # Clear the canvas and display the mode screen with buttons
+        self.canvas.delete("all")
+        # Display a message
+        self.canvas.create_text(
+            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 3,
+            text=f"Level {self.level + 1} Completed", fill=self.text_color, font=("Arial", 36, "bold")
+        )
+        # Display the current score on the mode screen
+        self.canvas.create_text(
+            COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 3 + 50,
+            text=f"Score: {self.score}", fill=self.text_color, font=("Arial", 24)
+        )
+        button_x = COLS * CELL_SIZE / 2
+        button_y_start = ROWS * CELL_SIZE / 2
+        # Replay Button
+        replay_button = tk.Button(self.master, text="Replay Level", font=("Arial", 18),
+                                  command=self.replay_level, bg=self.level_color, fg=self.text_color)
+        self.canvas.create_window(button_x, button_y_start, window=replay_button)
+        # Level Select Button
+        level_select_button = tk.Button(self.master, text="Return to Level Select", font=("Arial", 18),
+                                        command=self.draw_level_select_screen, bg=self.level_color, fg=self.text_color)
+        self.canvas.create_window(button_x, button_y_start + 50, window=level_select_button)
+        # Next Level Button
+        next_level_button = tk.Button(self.master, text="Next Level", font=("Arial", 18),
+                                      command=self.next_level, bg=self.level_color, fg=self.text_color)
+        self.canvas.create_window(button_x, button_y_start + 100, window=next_level_button)
+        replay_button.bind("<Enter>", lambda event, button=replay_button: self.on_button_hover(button))
+        replay_button.bind("<Leave>", lambda event, button=replay_button: self.off_button_hover(button))
+        level_select_button.bind("<Enter>", lambda event, button=level_select_button: self.on_button_hover(button))
+        level_select_button.bind("<Leave>", lambda event, button=level_select_button: self.off_button_hover(button))
+        next_level_button.bind("<Enter>", lambda event, button=next_level_button: self.on_button_hover(button))
+        next_level_button.bind("<Leave>", lambda event, button=next_level_button: self.off_button_hover(button))
+    
+
+    def check_goal_reached(self):
+        if self.player_pos == [COLS - 2, ROWS - 1]:
+            # Calculate score based on time left
+            time_taken = LEVEL_TIME - self.time_left
+            time_bonus = int(self.time_left * 10)  # Higher time left, higher score increment
+            self.score += time_bonus  # Increase score based on time bonus
+
+            # Update the score display
+            self.canvas.itemconfig(self.score_text, text=f"Score: {self.score}")
+
+            # Move to mode screen
+            self.state = "mode_screen"
+            self.draw_mode_screen()
 
     def update_timer(self):
-        self.time_left = LEVEL_TIME - (time.time() - self.start_time)
-        self.canvas.delete("timer")
-        self.canvas.create_text(
-            COLS * CELL_SIZE // 2, ROWS * CELL_SIZE + 65,
-            text=f"Time Left: {int(self.time_left)}", fill=self.text_color, font=("Arial", 20), tags="timer"
-        )
-        if self.time_left <= 0:
-            self.state = "game_over"
-            self.draw_game_over_screen()
-        elif self.state == "playing":
-            self.master.after(1000, self.update_timer)
+        if self.state == "playing":
+            self.time_left = max(0, LEVEL_TIME - int(time.time() - self.start_time))
+            self.canvas.itemconfig(self.timer_text, text=f"Time left: {self.time_left}")
+            if self.time_left > 0:
+                self.master.after(1000, self.update_timer)
+            else:
+                self.state = "game_over"
+                self.draw_game_over_screen()
 
     def on_level_select(self, event):
         item = self.canvas.find_closest(event.x, event.y)
