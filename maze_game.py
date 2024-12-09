@@ -93,7 +93,7 @@ class MazeGame:
         for i in range(self.gif_image.n_frames):
             self.gif_image.seek(i)
             frame = self.gif_image.copy()
-            frame = frame.resize((1050, 1050))
+            frame = frame.resize((1100, 1100))
             photo = ImageTk.PhotoImage(frame)
             self.gif_frames.append(photo)
 
@@ -174,8 +174,21 @@ class MazeGame:
     def off_hover(self, event, tag, level):
     # Change back to default image when not hovered
         self.canvas.itemconfig(tag, image=self.level_images_tk[level])
-
-
+        
+    def select_level(self, level, image_id):
+        for i in range(10):
+            if i != level:
+                self.canvas.itemconfig(image_id, image=self.level_images_tk[i])
+        self.canvas.itemconfig(image_id, image=self.level_selected_images_tk[level])
+        # Update the current level
+        self.level = level
+        self.player_pos = [1, 1]
+        self.time_left = LEVEL_TIME
+        self.score = 0
+        self.state = "waiting"  # Set state to waiting
+        # Add a delay of 1000 milliseconds (1 second) before drawing the maze
+        self.canvas.after(1000, self.draw_level_screen)
+    
     def draw_level_screen(self):
         self.canvas.delete("all")
         self.canvas.create_text(
