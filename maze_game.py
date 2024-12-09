@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 from tkinter import font as tkFont
 
 # Maze settings
-ROWS, COLS = 20, 35
+ROWS, COLS = 22, 37
 CELL_SIZE = 30
 LEVEL_TIME = 60
 
@@ -46,8 +46,9 @@ class MazeGame:
         self.high_score = 0
         self.state= "playing"
         self.bg_image = Image.open("assets/images/background.png")
-        self.bg_image_tk = ImageTk.PhotoImage(self.bg_image)
-        self.canvas = tk.Canvas(self.master, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE + 120, bg="black")
+        # self.bg_image_tk = ImageTk.PhotoImage(self.bg_image)
+        self.bg_image_tk = ImageTk.PhotoImage(self.bg_image.resize((1112, int(1114 * self.bg_image.size[1] / self.bg_image.size[0]))))
+        self.canvas = tk.Canvas(self.master, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE + 100, bg="black")
         self.canvas.pack()
 
         self.state = "start"
@@ -93,7 +94,7 @@ class MazeGame:
         for i in range(self.gif_image.n_frames):
             self.gif_image.seek(i)
             frame = self.gif_image.copy()
-            frame = frame.resize((1100, 1100))
+            frame = frame.resize((1111,1111))
             photo = ImageTk.PhotoImage(frame)
             self.gif_frames.append(photo)
 
@@ -129,7 +130,7 @@ class MazeGame:
         self.level_select_image_tk = ImageTk.PhotoImage(resized_image)
 
         center_x = COLS * CELL_SIZE / 2
-        center_y = ROWS * CELL_SIZE / 8 
+        center_y = ROWS * CELL_SIZE / 7 
         self.canvas.create_image(center_x, center_y, image=self.level_select_image_tk)
         # Draw the line in the center
         self.canvas.create_line(COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 5.5 + 50,
@@ -262,7 +263,7 @@ class MazeGame:
         self.canvas.delete("timer")
         self.canvas.create_text(
             COLS * CELL_SIZE // 2, ROWS * CELL_SIZE + 50,
-            text=f"Time Left: {int(self.time_left)}", fill=self.text_color, font=("Arial", 24), tags="timer"
+            text=f"Time Left: {int(self.time_left)}", fill=self.text_color, font=("Arial", 20), tags="timer"
         )
         if self.time_left <= 0:
             self.state = "game_over"
