@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 from tkinter import font as tkFont
 
 # Maze settings
-ROWS, COLS = 22, 37
+ROWS, COLS = 20, 31
 CELL_SIZE = 30
 LEVEL_TIME = 60
 
@@ -47,7 +47,7 @@ class MazeGame:
         self.state= "playing"
         self.bg_image = Image.open("assets/images/background.png")
         # self.bg_image_tk = ImageTk.PhotoImage(self.bg_image)
-        self.bg_image_tk = ImageTk.PhotoImage(self.bg_image.resize((1112, int(1114 * self.bg_image.size[1] / self.bg_image.size[0]))))
+        self.bg_image_tk = ImageTk.PhotoImage(self.bg_image.resize((935, int(1050 * self.bg_image.size[1] / self.bg_image.size[0]))))
         self.canvas = tk.Canvas(self.master, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE + 100, bg="black")
         self.canvas.pack()
 
@@ -94,7 +94,7 @@ class MazeGame:
         for i in range(self.gif_image.n_frames):
             self.gif_image.seek(i)
             frame = self.gif_image.copy()
-            frame = frame.resize((1111,1111))
+            frame = frame.resize((1050,1050))
             photo = ImageTk.PhotoImage(frame)
             self.gif_frames.append(photo)
 
@@ -126,7 +126,7 @@ class MazeGame:
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor="nw", image=self.bg_image_tk)
         self.level_select_image = Image.open("assets/images/level_select_title.png")
-        resized_image = self.level_select_image.resize((450, 100), Image.Resampling.LANCZOS) 
+        resized_image = self.level_select_image.resize((300, 80), Image.Resampling.LANCZOS) 
         self.level_select_image_tk = ImageTk.PhotoImage(resized_image)
 
         center_x = COLS * CELL_SIZE / 2
@@ -151,15 +151,15 @@ class MazeGame:
         for i in range(10):
             # Load default and hover images for each level
             default_image = Image.open(f"assets/images/level_{i + 1}.png")
-            resized_default_image = default_image.resize((200, 75), Image.Resampling.LANCZOS)
+            resized_default_image = default_image.resize((180, 75), Image.Resampling.LANCZOS)
             default_image_tk = ImageTk.PhotoImage(resized_default_image)
             self.level_images_tk.append(default_image_tk)
             hover_image = Image.open(f"assets/images/level_hor_{i + 1}.png")
-            resized_hover_image = hover_image.resize((200, 75), Image.Resampling.LANCZOS)
+            resized_hover_image = hover_image.resize((180, 75), Image.Resampling.LANCZOS)
             hover_image_tk = ImageTk.PhotoImage(resized_hover_image)
             self.level_hover_images_tk.append(hover_image_tk)
             selected_image = Image.open(f"assets/images/level_clk_{i + 1}.png")  # Image when level is selected
-            resized_selected_image = selected_image.resize((200, 75), Image.Resampling.LANCZOS)
+            resized_selected_image = selected_image.resize((180, 75), Image.Resampling.LANCZOS)
             selected_image_tk = ImageTk.PhotoImage(resized_selected_image)
             self.level_selected_images_tk.append(selected_image_tk)
         # Create the image on canvas and bind events
@@ -270,8 +270,22 @@ class MazeGame:
             (x + 0.5) * CELL_SIZE, (y + 0.5) * CELL_SIZE,  # Center the image
             image=self.goal_image
         )
-    
-    
+
+    def check_goal_reached(self):
+        if self.player_pos == [COLS - 2, ROWS - 1]:
+            # Calculate score based on time left
+            time_taken = LEVEL_TIME - self.time_left
+            time_bonus = int(self.time_left * 10)  # Higher time left, higher score increment
+            self.score += time_bonus  # Increase score based on time bonus
+
+            # Update the score display
+            self.canvas.itemconfig(self.score_text, text=f"Score: {self.score}")
+
+            # Move to mode screen
+            self.state = "mode_screen"
+            self.draw_mode_screen()
+        
+
     def draw_mode_screen(self):
         # Clear the canvas and display the mode screen with buttons
         self.canvas.delete("all")
@@ -306,20 +320,32 @@ class MazeGame:
         next_level_button.bind("<Enter>", lambda event, button=next_level_button: self.on_button_hover(button))
         next_level_button.bind("<Leave>", lambda event, button=next_level_button: self.off_button_hover(button))
     
+    def replay_level(self):
+        # Restart the current level
+        self.start_game()
+    def next_level(self):
+        # Move to the next level
+        self.level += 1
+        if self.level < len(mazes):
+            self.start_game()
+        else:
+            self.state = "game_over"
+            self.draw_game_over_screen()
 
-    def check_goal_reached(self):
-        if self.player_pos == [COLS - 2, ROWS - 1]:
-            # Calculate score based on time left
-            time_taken = LEVEL_TIME - self.time_left
-            time_bonus = int(self.time_left * 10)  # Higher time left, higher score increment
-            self.score += time_bonus  # Increase score based on time bonus
-
-            # Update the score display
-            self.canvas.itemconfig(self.score_text, text=f"Score: {self.score}")
-
-            # Move to mode screen
-            self.state = "mode_screen"
-            self.draw_mode_screen()
+    def draw_game_over_screen(self):
+        self.canvas.delete("all")
+        self.canvas.create_text(
+        COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 3,
+        text="Game Over", fill="red", font=("Arial", 36, "bold")
+    )
+        self.canvas.create_text(
+        COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 2,
+        text=f"Final Score: {self.score}", fill=self.text_color, font=("Arial", 24)
+    )
+        self.canvas.create_text(
+        COLS * CELL_SIZE / 2, ROWS * CELL_SIZE / 2 + 50,
+        text="Press R to Restart", fill=self.Heading_color, font=("Arial", 24)
+    )
 
     def update_timer(self):
         if self.state == "playing":
